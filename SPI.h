@@ -241,6 +241,29 @@ public:
     }
     return out.val;
   }
+  inline static uint32_t transfer32(uint32_t data) {
+    union { 
+      uint32_t val;
+      uint8_t bytes[4]; 
+    } in, out;
+    in.val = data;
+    if (!(SPCR & _BV(DORD))) {
+      for (size_t i = 3; i >= 0; -- i) {
+        SPDR = in.bytes[i];
+        asm volatile("nop"); // See transfer(uint8_t) function
+        while (!(SPSR & _BV(SPIF))) ;
+        out.bytes[i] = SPDR;
+      }
+    } else {
+      for (size_t i = 0; i < 4; ++ i) {
+        SPDR = in.bytes[i];
+        asm volatile("nop");
+        while (!(SPSR & _BV(SPIF))) ;
+        out.bytes[i] = SPDR;
+      }
+    }
+    return out.val;
+  }
   inline static void transfer(void *buf, size_t count) {
     if (count == 0) return;
     uint8_t *p = (uint8_t *)buf;
