@@ -241,6 +241,23 @@ public:
     }
     return out.val;
   }
+
+  // Found in Internet
+  inline static void transfer(void *buf, size_t count) {
+    if (count == 0) return;
+    uint8_t *p = (uint8_t *)buf;
+    SPDR = *p;
+    while (--count > 0) {
+      uint8_t out = *(p + 1);
+      while (!(SPSR & _BV(SPIF))) ;
+      uint8_t in = SPDR;
+      SPDR = out;
+      *p++ = in;
+    }
+    while (!(SPSR & _BV(SPIF))) ;
+    *p = SPDR;
+  }
+
   inline static uint32_t transfer32(uint32_t data) {
     union { 
       uint32_t val;
